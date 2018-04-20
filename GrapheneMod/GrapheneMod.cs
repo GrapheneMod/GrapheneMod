@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
+using Logger = GrapheneMod.Logging.Logging;
+
 namespace GrapheneMod
 {
     #region General Handles
@@ -21,12 +23,12 @@ namespace GrapheneMod
 
     #region Logging Handles
     /// <summary>
-    /// A function with no returning value containing the "log" and "color" parameters.
+    /// A function with no returning value containing the "text" and "color" parameters.
     /// It is used when the program/game pushes a message to the logs.
     /// </summary>
-    /// <param name="log">The log object containing a string or an object that will be converted to a string.</param>
+    /// <param name="log">The string that was logged to the console/written to the log file</param>
     /// <param name="color">The color of the message that should be printed into the console. Note this is not logged into the log files!</param>
-    public delegate void PushLogHandler(object log, ConsoleColor color);
+    public delegate void PushLogHandler(string text, ConsoleColor color, bool inConsole);
     /// <summary>
     /// A function with no returning value containing the "input" parameter.
     /// It is used when the program/game gets an input message from the console or a STDIN file.
@@ -98,8 +100,8 @@ namespace GrapheneMod
 
         // Logging
         /// <summary>
-        /// This event is called when Graphene sends a log message to the console or STDOUT file.
-        /// It returns the log(object) and color(ConsoleColor).
+        /// This event is called when Graphene sends a text message to the console or STDOUT file.
+        /// It returns the text(String) and color(ConsoleColor).
         /// </summary>
         public static event PushLogHandler OnGrapheneLogOut;
         /// <summary>
@@ -109,25 +111,42 @@ namespace GrapheneMod
         public static event PullInputHandler OnGrapheneLogIn;
         #endregion
 
+        static GrapheneMod()
+        {
+            // Setup event chaining
+            Logger.OnLog += delegate (string text, ConsoleColor color, bool inFile, bool inConsole)
+            {
+                OnGrapheneLogOut(text, color, inConsole);
+            };
+        }
+
         #region Graphene Functions
+        /// <summary>
+        /// Call this function to start the loading process of GrapheneMod.
+        /// This function returns if GrapheneMod is already loaded, so you don't have to worry about executing it multiple times.
+        /// It will also call the Load events.
+        /// </summary>
         public static void Load()
         {
 
         }
 
+        /// <summary>
+        /// Call this function to start the unloading process of GrapheneMod.
+        /// This function returns if GrapheneMod isn't loaded, so you don't have to worry about executing it multiple times.
+        /// This will also call the Unload events.
+        /// </summary>
         public static void Unload()
         {
 
         }
 
+        /// <summary>
+        /// Call this function to start the reloading process of GrapheneMod.
+        /// This will also call the Reload events.
+        /// Warning: This function should not be called mid-reload, as it can cause problems.
+        /// </summary>
         public static void Reload()
-        {
-
-        }
-        #endregion
-
-        #region Console Functions
-        public static void InitializeLog()
         {
 
         }
