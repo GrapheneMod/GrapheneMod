@@ -1,9 +1,14 @@
 ﻿using System;
+using System.IO;
+using System.Reflection;
+using System.Diagnostics;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
 using Logger = GrapheneMod.Logging.Logging;
+using GrapheneMod.dotNet;
+using GrapheneMod.Extensions;
 
 namespace GrapheneMod
 {
@@ -43,6 +48,41 @@ namespace GrapheneMod
     /// </summary>
     public static class GrapheneMod
     {
+        #region Graphene Information
+        // Private data for GrapheneMod
+        private static Assembly _GraphenAssembly = Assembly.GetExecutingAssembly();
+        private static FileVersionInfo _GrapheneFileInfo = FileVersionInfo.GetVersionInfo(_GraphenAssembly.Location);
+
+        // Public information about the file
+        /// <summary>
+        /// The name of the mod loader.
+        /// </summary>
+        public static string Name => _GrapheneFileInfo.ProductName;
+        /// <summary>
+        /// The name of the creator.
+        /// </summary>
+        public static string Creator => _GrapheneFileInfo.CompanyName;
+        /// <summary>
+        /// The version of the mod loader.
+        /// </summary>
+        public static string Version => _GrapheneFileInfo.ProductVersion;
+        /// <summary>
+        /// The description of the mod loader
+        /// </summary>
+        public static string Description => _GrapheneFileInfo.FileDescription;
+        #endregion
+
+        #region Graphene Paths
+        /// <summary>
+        /// The current working directory containing the mod loader.
+        /// </summary>
+        public static string CurrentDirectory => Path.GetDirectoryName(_GraphenAssembly.Location);
+        /// <summary>
+        /// The location of the directory containing all of the extensions.
+        /// </summary>
+        public static string ExtensionsDirectory => ExtensionInternal.ExtensionsDirectory;
+        #endregion
+
         #region Graphene Events
         // Loading
         /// <summary>
@@ -116,7 +156,7 @@ namespace GrapheneMod
             // Setup event chaining
             Logger.OnLog += delegate (string text, ConsoleColor color, bool inFile, bool inConsole)
             {
-                OnGrapheneLogOut(text, color, inConsole);
+                OnGrapheneLogOut.CallTry(text, color, inConsole);
             };
         }
 
@@ -128,7 +168,20 @@ namespace GrapheneMod
         /// </summary>
         public static void Load()
         {
+            OnGrapheneLoading.CallTry();
+            try
+            {
+                // Load the extensions
+                foreach(string file in Directory.GetFiles(ExtensionsDirectory))
+                    ExtensionInternal.RegisterAssemblyName(file);
+                ExtensionInternal.LoadAssemblies();
 
+                OnGrapheneLoaded.CallTry();
+            }catch(Exception ex)
+            {
+                OnGrapheneLoadingError.CallTry(ex);
+                Unload();
+            }
         }
 
         /// <summary>
@@ -138,7 +191,14 @@ namespace GrapheneMod
         /// </summary>
         public static void Unload()
         {
-
+            OnGrapheneUnloading.CallTry();
+            try
+            {
+                OnGrapheneUnloaded.CallTry();
+            }catch(Exception ex)
+            {
+                OnGrapheneUnloadingError.CallTry(ex);
+            }
         }
 
         /// <summary>
@@ -148,7 +208,14 @@ namespace GrapheneMod
         /// </summary>
         public static void Reload()
         {
-
+            OnGrapheneReloading.CallTry();
+            try
+            {
+                OnGrapheneReloaded.CallTry();
+            }catch(Exception ex)
+            {
+                OnGrapheneReloadingError.CallTry(ex);
+            }
         }
         #endregion
     }

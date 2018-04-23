@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
+using GrapheneMod.dotNet;
+
 namespace GrapheneMod.Logging
 {
     #region Log Handlers
@@ -31,6 +33,13 @@ namespace GrapheneMod.Logging
 
         #region Log Variables
         private static ConsoleColor _Previous_Color = ConsoleColor.White;
+
+        private static Dictionary<string, string> _Custom_Names = new Dictionary<string, string>()
+        {
+            { "Assembly-CSharp", "Game" },
+            { "UnityEngine", "Unity" },
+            { "GrapheneMod", "Graphene" }
+        };
         #endregion
 
         #region Log Events
@@ -80,25 +89,15 @@ namespace GrapheneMod.Logging
         private static void Log(object log, ConsoleColor color, bool inFile, bool inConsole, Assembly assembly, string prefix)
         {
             string assemblyName = assembly.GetName().Name;
-            switch (assemblyName.ToLower())
-            {
-                case "assembly-csharp":
-                    assemblyName = "Game";
-                    break;
-                case "unityengine":
-                    assemblyName = "Unity";
-                    break;
-                case "graphenemod":
-                    assemblyName = "Graphene";
-                    break;
-            }
+            if (_Custom_Names.ContainsKey(assembly.GetName().Name))
+                assemblyName = _Custom_Names[assemblyName];
             string message = "[" + prefix + "] " + assemblyName + " >> " + log.ToString();
 
             if (inFile)
                 File.AppendAllText(_Current_Path, message + Environment.NewLine);
             if (inConsole)
                 WriteLine(message, color);
-            OnLog(message, color, inFile, inConsole);
+            OnLog.CallTry(message, color, inFile, inConsole);
         }
 
         // Public functions
@@ -134,11 +133,29 @@ namespace GrapheneMod.Logging
         /// <param name="log">The log object to be converted to a string and displayed.</param>
         /// <param name="error">The exception to be displayed/written into the log files.</param>
         /// <param name="showExceptionInConsole">Should the exception be displayed to the console.</param>
-        public static void LogError(object log, Exception error = null, bool showExceptionInConsole = true)
+        public static void LogError(object log, Exception error = null, bool showExceptionInConsole = false)
         {
             Log(log, ConsoleColor.Red, true, true, Assembly.GetCallingAssembly(), "ERROR");
             if (error != null)
                 Log(error, ConsoleColor.DarkRed, true, showExceptionInConsole, Assembly.GetCallingAssembly(), "EXCEPTION");
+        }
+        #endregion
+
+        #region Functions
+        /// <summary>
+        /// Call this function to sets a custom assembly name in the logging sequence.
+        /// Instead of [LOG] Test-Plugin >> Test log, you get [LOG] TestPlugin >> Test log.
+        /// Simply pass the name you want to the newName parameter.
+        /// </summary>
+        /// <param name="newName">The name you want to be displayed in logs.</param>
+        public static void SetCustomName(string newName)
+        {
+            string name = Assembly.GetCallingAssembly().GetName().Name;
+
+            if (_Custom_Names.ContainsKey(name))
+                _Custom_Names[name] = newName;
+            else
+                _Custom_Names.Add(name, newName);
         }
         #endregion
     }

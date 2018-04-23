@@ -45,12 +45,13 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="dotNet\Delegate_Extensions.cs" />
+    <Compile Include="Extensions\ExtensionInternal.cs" />
+    <Compile Include="Extensions\ExtensionParser.cs" />
     <Compile Include="GrapheneMod.cs" />
     <Compile Include="Logging\Logging.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="dotNet\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
